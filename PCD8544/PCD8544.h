@@ -52,4 +52,5 @@
 
 	void glc_write_symbol_audio(void);
 	void glc_write_symbol_grados(void);
+	void glc_write_WETRE_INDRERIGHT(void);
 #endif /* PCD8544_PCD8544_H_ */

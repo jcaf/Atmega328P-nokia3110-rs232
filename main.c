@@ -43,8 +43,8 @@ int16_t ADRESHL_RESISTANCE2 = 0;
 
 //Activacion del buzzer dentro del rango
 //R1: 0..200 OHMs
-#define R1_RANGE_MIN 98.0f
-#define R1_RANGE_MAX 104.0f
+#define R1_RANGE_MIN 90.0f
+#define R1_RANGE_MAX 110.0f
 
 //R2: 0..100 OHMs
 #define R2_RANGE_MIN 50.0f
@@ -66,20 +66,25 @@ char buff_out[SCIRBUF_BUFF_SIZE];
 
 void wINTRODUCCION(void)
 {
-	 gotoXY (0,0);
-	 LcdString("WETRE INDRE.");
-	 gotoXY (10,2);
+	 gotoXY (3,0);
+	 //LcdString("WETRE INDRE.");
+	 glc_write_WETRE_INDRERIGHT();
+	 gotoXY ((84-(7*7))/2,2);
+
 	 LcdString("SISTEMA");
-	 gotoXY (10,3);
+	 //gotoXY (10,3);
+	 gotoXY ((84-(8*7))/2 , 3);
 	 LcdString("MEDICION");
-	 gotoXY (15,4);
+	 //gotoXY (15,4);
+	 gotoXY ((84-(5*7))/2,4);
 	 LcdString("T 300");
 }
 
 void wVENTA1(void)
 {
-	 gotoXY (0,0);
-	 LcdString("WETRE INDRE.");
+	gotoXY (3,0);
+	 //LcdString("WETRE INDRE.");
+	 glc_write_WETRE_INDRERIGHT();
 
 	 gotoXY (20,2);
 	 LcdString("RESIST");//resistencia
@@ -88,8 +93,9 @@ void wVENTA1(void)
 }
 void wVENTA2(void)
 {
-	 gotoXY (0,0);
-	 LcdString("WETRE INDRE.");
+	gotoXY (3,0);
+	 //LcdString("WETRE INDRE.");
+	 glc_write_WETRE_INDRERIGHT();
 	 gotoXY (7,2);
 	 LcdString("PRESION-OK");
 	 gotoXY((84-33)/2, 3);
@@ -97,21 +103,23 @@ void wVENTA2(void)
 }
 void wVENTA3(void)
 {
-	 gotoXY (0,0);
-	 LcdString("WETRE INDRE.");
+	gotoXY (3,0);
+	 //LcdString("WETRE INDRE.");
+	 glc_write_WETRE_INDRERIGHT();
 	 gotoXY (3,1);
 	 LcdString("TEMPERATURA");
-	 gotoXY ( (84-10)/2,2);
+	 gotoXY ( ((84-10)/2) -5,2);
 	 glc_write_symbol_grados();
 	 LcdString("C");
 }
 void wVENTA4(void)
 {
-	 gotoXY (0,0);
-	 LcdString("WETRE INDRE.");
+	gotoXY (3,0);
+	 //LcdString("WETRE INDRE.");
+	 glc_write_WETRE_INDRERIGHT();
 	 gotoXY (15,1);
 	 LcdString("BATERIA");
-	 gotoXY((84-5)/2,2);
+	 gotoXY(((84-5)/2)-5,2);
 	 LcdString("%");
 }
 
@@ -182,14 +190,12 @@ int main(void)
 	int8_t sm0 =0;
 	char str[20];
 
-	//PinTo1(PORTWxLED1, PINxLED1);
-	//ConfigOutputPin(CONFIGIOxLED1, PINxLED1);
 
-	//glcd init
 	LcdInitialise();
 	LcdClear();
 	clearPixels();
 
+	//glc_write_WETRE_INDRERIGHT();
 //	gotoXY((84-33)/2, 3);
 //	glc_write_symbol_audio();
 //gotoXY(20, 3);
@@ -323,7 +329,7 @@ int main(void)
 				{
 					//itoa(ADRESHL_NTC10K, str, 10);
 					dtostrf(temperature, 0, 2, str);
-					gotoXY (10,3);
+					gotoXY (8,3);
 					//LcdString(str);
 					LCD_writeString_megaFont(str);
 				}
@@ -339,8 +345,8 @@ int main(void)
 						battery_porcent = 100.0f;
 					}
 
-					dtostrf(battery_porcent, 0, 0, str);
-					gotoXY (20,3);
+					dtostrf(battery_porcent, 0, 1, str);
+					gotoXY (15,3);
 					LCD_writeString_megaFont(str);
 
 				}
@@ -531,18 +537,43 @@ void rx_trama(void)
 				if (str_trimlr(rx.buffer, buff_temp, 'N', 'F' ))
 				{
 					ADRESHL_NTC10K = atoi(buff_temp);
-					temperature = ntc10k_st(ADRESHL_NTC10K, 1023);
+
+					if (ADRESHL_NTC10K > 0)
+					{
+						temperature = ntc10k_st(ADRESHL_NTC10K, 1023);
+					}
+					else
+					{
+						temperature = 0.0;
+					}
+
 
 				}
 				if (str_trimlr(rx.buffer, buff_temp, 'F', 'R' ))
 				{
 					ADRESHL_RESISTANCE2 = atoi(buff_temp);
-					resistance2 = calculate_resistance(ADRESHL_RESISTANCE2, ADC_TOP);
+
+					if (ADRESHL_RESISTANCE2 > 0)
+					{
+						resistance2 = calculate_resistance(ADRESHL_RESISTANCE2, ADC_TOP);
+					}
+					else
+					{
+						resistance2 = 0.0f;
+					}
+
 				}
 				if (str_trimlr(rx.buffer, buff_temp, 'R', 'C' ))
 				{
 					ADRESHL_RESISTANCE1 = atoi(buff_temp);
-					resistance1 = calculate_resistance(ADRESHL_RESISTANCE1, ADC_TOP);
+					if (ADRESHL_RESISTANCE1 > 0)
+					{
+						resistance1 = calculate_resistance(ADRESHL_RESISTANCE1, ADC_TOP);
+					}
+					else
+					{
+						resistance1 = 0.0f;
+					}
 				}
 
 				rx.sm0 = 0x00;

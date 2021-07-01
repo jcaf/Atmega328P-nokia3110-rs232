@@ -20,7 +20,7 @@
 #define LCD_Y 48
 #define LCD_CMD 0
 
-static int8_t _x,_y;
+static int _x,_y;
 
 int pixels[84][6] = {{0}};
 
@@ -28,7 +28,43 @@ const unsigned char GLCD_SYMBOL_GRADOS[5] PROGMEM =
 {
 		0x00, 0x02, 0x05, 0x02, 0x0
 };
+const unsigned char WETRE_INDRERIGHT[16][4] PROGMEM =
+{
+	//W
+	{0x1f, 0x08, 0x1f, 0x00},
+	//E
+	{0x1f, 0x15, 0x11, 0x00},
+	//T
+	{0x01, 0x1f, 0x01, 0x00},
+	//R
+	{0x1f, 0x05, 0x1b, 0x00},
+	//E
+	{0x1f, 0x15, 0x11, 0x00},
+	//blank
+	{0x00, 0x00, 0x00, 0x00},
+	//
+	//I
+	{0x00, 0x1f, 0x00, 0x00},
+	//N+1 mas
+	{0x1f, 0x02, 0x04, 0x1f},
+	//D
+	{0x1f, 0x11, 0x0e, 0x00},
+	//R
+	{0x1f, 0x05, 0x1b, 0x00},
+	//E
+	{0x1f, 0x15, 0x11, 0x00},
+	//R
+	{0x1f, 0x05, 0x1b, 0x00},
+	//I
+	{0x00, 0x1f, 0x00, 0x00},
+	//G
+	{0x1f, 0x15, 0x1d, 0x00},
+	//H
+	{0x1f, 0x04, 0x1f, 0x00},
+	//T
+	{0x01, 0x1f, 0x01, 0x00},
 
+};
 
 const unsigned char GLCD_SYMBOL_AUDIO[3][33] PROGMEM =
 {
@@ -432,36 +468,37 @@ void LcdClear(void)
 void LCD_writeChar_megaFont (unsigned char ch)
 {
 	unsigned char i, j;
-
 	if(ch == '.')
-		ch = 10;
+		{ch = 10;}
 	else if (ch == '+')
-		ch = 11;
+		{ch = 11;}
 	else if (ch == '-')
-		ch = 12;
+		{ch = 12;}
 	else
-		ch = ch & 0x0f;
+		{ch = ch & 0x0f;}
 
 	for(i=0; i<3; i++)
 	{
 		LcdWrite( 0, 0x80 + _x); // Column.
 		LcdWrite( 0, 0x40 + _y+i); // Row.
-
-
 		for(j=0; j<16; j++)
 		{
 			//lcd_buffer[cursor_row][cursor_col + j] |=  pgm_read_byte(&(number[ch][i][j]));
 			//LCD_writeData(lcd_buffer[cursor_row][cursor_col + j]);
-
 			LcdWrite(LCD_D, pgm_read_byte(&(number[ch][i][j])) );
 		}
 	}
 
-	if(ch == '.')
-			_x += 5;
-		else
-			_x += 12;
+	if(ch == 10)
+	{
+		_x += 5;
+	}
+	else
+	{
+		_x += 12;
+	}
 }
+
 
 void glc_write_symbol_audio(void)
 {
@@ -476,13 +513,38 @@ void glc_write_symbol_audio(void)
 		}
 	}
 }
+void glc_write_WETRE_INDRERIGHT(void)
+{
+	for (int8_t f=0; f<16; f++)
+	{
+		for (int8_t col=0; col<4; col++)
+		{
+			LcdWrite(LCD_D, pgm_read_byte(&WETRE_INDRERIGHT[f][col]) );
+		}
+		LcdWrite(LCD_D, 0x00 );
+	}
+}
+
 void glc_write_symbol_grados(void)
 {
 	for (int8_t col=0; col<5; col++)
 	{
 		LcdWrite(LCD_D, pgm_read_byte(&GLCD_SYMBOL_GRADOS[col]) );
 	}
+}
 
+void bigfont2after_blanks(void)
+{
+	for(int i=0; i<3; i++)
+	{
+		LcdWrite( 0, 0x80 + _x); // Column.
+		LcdWrite( 0, 0x40 + _y+i); // Row.
+
+		for(int j=0; j<16; j++)
+		{
+			LcdWrite(LCD_D, 0xff);
+		}
+	}
 }
 
 /*--------------------------------------------------------------------------------------------------
@@ -493,14 +555,13 @@ void glc_write_symbol_grados(void)
 --------------------------------------------------------------------------------------------------*/
 void LCD_writeString_megaFont ( char *string )
 {
-//    char_start = 0;
 
     while ( *string )
     {
         LCD_writeChar_megaFont( *string++ );
     }
 
-//    gotoXY(char_start+6, 3);
+    bigfont2after_blanks();
 
 }
 
@@ -513,7 +574,7 @@ void LcdInitialise(void)
 	PinTo1(PORTWxPCD8544_SDIN, PIN_PCD8544_SDIN);
 	PinTo1(PORTWxPCD8544_SCK, PIN_PCD8544_SCK);
 	//-+
-	PinTo1(PORTWxPCD8544_BKLIGHT, PIN_PCD8544_BKLIGHT);//active NPN to ground
+	PinTo0(PORTWxPCD8544_BKLIGHT, PIN_PCD8544_BKLIGHT);//active NPN to ground
 	ConfigOutputPin(CONFIGIOxPCD8544_BKLIGHT, PIN_PCD8544_BKLIGHT);
 
 	__delay_ms(1);
@@ -522,7 +583,6 @@ void LcdInitialise(void)
 	ConfigOutputPin(CONFIGIOxPCD8544_RES, PIN_PCD8544_RES);
 	ConfigOutputPin(CONFIGIOxPCD8544_SDIN, PIN_PCD8544_SDIN);
 	ConfigOutputPin(CONFIGIOxPCD8544_SCK, PIN_PCD8544_SCK);
-
 
 
 	InitSPI_MASTER();//NECESITA QUE TODOS LOS PINS ESTEN EN ALTO PARA ASEGURAR UNA CORRECTA ASERCION DEL NIVEL BAJO
