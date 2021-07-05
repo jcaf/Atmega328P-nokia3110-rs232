@@ -185,6 +185,51 @@ float VoltBatt_get(void)//Blocking
 	return (ADC_read(ADC_CH_0) * ADC_AREF * (ADCH1_R1 + ADCH1_R2) )/ (ADC_TOP * ADCH1_R1);
 }
 
+
+struct _job
+{
+	int8_t sm0;//x jobs
+
+	uint16_t counter0;
+	uint16_t counter1;
+	//int8_t mode;
+
+	struct _job_f
+	{
+		unsigned enable:1;
+		unsigned job:1;
+		unsigned lock:1;
+		unsigned recorridoEnd:1;
+		unsigned __a:4;
+	}f;
+};
+struct _job job_capture_temp;
+struct _job job_reset;
+struct _job job_buzzer;
+#define BUZZER_KTIME_MS 300
+void buzzer_job(void);
+
+#define TEMPERATURE_DEVIATION -2
+
+struct _smoothAlg
+{
+	int8_t sm0;//x jobs
+	uint16_t counter0;
+	float average;
+	int16_t Pos;	//# de elementos > que la media
+	int16_t Neg;	//# de elementos > que la media
+	float TD;	//Total Deviation
+	int SMOOTHALG_MAXSIZE;
+};
+#define TEMP_SMOOTHALG_MAXSIZE 5
+const struct _smoothAlg smoothAlg_reset;
+struct _smoothAlg smoothAlg_temp;
+struct _smoothAlg smoothAlg_mvx;
+
+//int8_t
+void temp_capture(int16_t ADRESHL_NTC10K);
+
+int8_t smoothAlg_nonblock(struct _smoothAlg *smooth, int16_t *buffer, int SMOOTHALG_MAXSIZE, float *Answer);
 int main(void)
 {
 	int8_t kb_counter = 0;
@@ -297,13 +342,15 @@ int main(void)
 
 					if ( (resistance1 >= R1_RANGE_MIN) && (resistance1  <= R1_RANGE_MAX) )
 					{
-						PinTo1(PORTWxBUZZER, PINxBUZZER);
+						//PinTo1(PORTWxBUZZER, PINxBUZZER);
+						job_buzzer.f.job = 1;
 						PinTo1(PORTWxLED1, PINxLED1);
 						//Buzzer ON
 					}
 					else
 					{
-						PinTo0(PORTWxBUZZER, PINxBUZZER);
+						//PinTo0(PORTWxBUZZER, PINxBUZZER);
+						job_buzzer = job_reset;
 						PinTo0(PORTWxLED1, PINxLED1);
 					}
 				}
@@ -317,12 +364,14 @@ int main(void)
 					if ( (resistance1 >= R2_RANGE_MIN) && (resistance1  <= R2_RANGE_MAX) )
 					{
 						//Buzzer ON
-						PinTo1(PORTWxBUZZER, PINxBUZZER);
+						//PinTo1(PORTWxBUZZER, PINxBUZZER);
+						job_buzzer.f.job = 1;
 						PinTo1(PORTWxLED1, PINxLED1);
 					}
 					else
 					{
-						PinTo0(PORTWxBUZZER, PINxBUZZER);
+						//PinTo0(PORTWxBUZZER, PINxBUZZER);
+						job_buzzer = job_reset;
 						PinTo0(PORTWxLED1, PINxLED1);
 					}
 				}
@@ -356,6 +405,7 @@ int main(void)
 			}
 		}
 
+		buzzer_job();
 
 		main_flag.f1ms = 0;
 	}//End while
@@ -370,7 +420,129 @@ ISR(TIMER0_COMPA_vect)
 }
 
 
+void buzzer_job(void)
+{
+	//Buzzer
+	if (job_buzzer.f.job)
+	{
+		if (job_buzzer.sm0 == 0)
+		{
+			PinTo1(PORTWxBUZZER, PINxBUZZER);
+			job_buzzer.counter0 = 0;
+			job_buzzer.sm0++;
+		}
+		else if (job_buzzer.sm0 == 1)
+		{
+			if (main_flag.f1ms)
+			{
+				if (++job_buzzer.counter0 >= BUZZER_KTIME_MS)
+				{
+					PinTo0(PORTWxBUZZER, PINxBUZZER);
+					job_buzzer.counter0 = 0;
+					job_buzzer.sm0 = 0x0;
+					job_buzzer.f.job = 0;
+				}
+			}
+		}
+	}
+}
 
+//int8_t
+void temp_capture(int16_t ADRESHL_NTC10K)
+{
+	float smoothAnswer;
+	static int16_t smoothVector[TEMP_SMOOTHALG_MAXSIZE];
+
+	//-----------------
+	if (job_capture_temp.sm0 == 0)
+	{
+		smoothVector[job_capture_temp.counter0] = ADRESHL_NTC10K;
+		if (++job_capture_temp.counter0 >= TEMP_SMOOTHALG_MAXSIZE)
+		{
+			job_capture_temp.counter0 = 0x00;
+			job_capture_temp.sm0++;//calcular smooth
+		}
+	}
+	if (job_capture_temp.sm0 == 1)
+	{
+		if (smoothAlg_nonblock(&smoothAlg_temp, smoothVector, TEMP_SMOOTHALG_MAXSIZE, &smoothAnswer))
+		{
+			if (smoothAnswer > 0)
+			{
+				temperature = ntc10k_st(smoothAnswer, 1023) + TEMPERATURE_DEVIATION;
+			}
+			else
+			{
+				temperature = 0.0;
+			}
+
+			job_capture_temp.sm0 = 0x0;
+			//return 1;
+		}
+	}
+	//return 0;
+}
+int8_t smoothAlg_nonblock(struct _smoothAlg *smooth, int16_t *buffer, int SMOOTHALG_MAXSIZE, float *Answer)
+{
+//	static float average=0;
+//	static int16_t Pos;	//# de elementos > que la media
+//	static int16_t Neg;	//# de elementos > que la media
+//	static float TD;	//Total Deviation
+//
+
+	//1- Calculate media
+	if (smooth->sm0 == 0)
+	{
+		smooth->average = 0;
+		smooth->counter0 = 0x0;
+		smooth->sm0++;
+	}
+	if (smooth->sm0 == 1)
+	{
+		smooth->average +=buffer[smooth->counter0];
+
+		if (++smooth->counter0 >= SMOOTHALG_MAXSIZE)
+		{
+			smooth->counter0 = 0x00;//bug fixed
+
+			smooth->average /= SMOOTHALG_MAXSIZE;
+			//
+			smooth->Pos = 0;
+			smooth->Neg = 0;
+			smooth->TD = 0;
+			smooth->sm0++;
+		}
+	}
+	//2 - Find Pos and Neg + |Dtotal|
+	else if (smooth->sm0 == 2)
+	{
+		if (buffer[smooth->counter0] > smooth->average)
+		{
+			smooth->Pos++;
+			smooth->TD += ( ((float)(buffer[smooth->counter0]))-smooth->average);//Find |Dtotal|
+		}
+		if (buffer[smooth->counter0] < smooth->average)
+		{
+			smooth->Neg++;
+		}
+		//
+		if (++smooth->counter0 >= SMOOTHALG_MAXSIZE)
+		{
+			smooth->counter0 = 0;
+			smooth->sm0 = 0;
+			//bug
+			if (smooth->TD<0)
+			{
+				smooth->TD *= -1;//convirtiendo a positivo
+			}
+			//
+			*Answer = smooth->average + ( ( (smooth->Pos-smooth->Neg) * smooth->TD )/ ( SMOOTHALG_MAXSIZE*SMOOTHALG_MAXSIZE) );
+			return 1;
+			//
+		}
+	}
+	return 0;
+}
 uint8_t checksum(char *str, uint8_t length)
 {
     uint16_t acc = 0;
@@ -539,14 +711,16 @@ void rx_trama(void)
 				{
 					ADRESHL_NTC10K = atoi(buff_temp);
 
-					if (ADRESHL_NTC10K > 0)
-					{
-						temperature = ntc10k_st(ADRESHL_NTC10K, 1023);
-					}
-					else
-					{
-						temperature = 0.0;
-					}
+					temp_capture(ADRESHL_NTC10K);
+
+//					if (ADRESHL_NTC10K > 0)
+//					{
+//						temperature = ntc10k_st(ADRESHL_NTC10K, 1023);
+//					}
+//					else
+//					{
+//						temperature = 0.0;
+//					}
 
 
 				}
