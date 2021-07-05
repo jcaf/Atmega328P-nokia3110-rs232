@@ -16,6 +16,7 @@
  *      http://carlosefr.github.io/pcd8544/
  *
  * OK SABADO 26 JUNIO 2021
+ * Pasando a Wilfredo
  */
 
 #include "system.h"
