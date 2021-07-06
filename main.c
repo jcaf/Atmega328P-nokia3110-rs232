@@ -203,6 +203,7 @@ struct _job
 		unsigned __a:4;
 	}f;
 };
+struct _job job_capture_resistance2;
 struct _job job_capture_temp;
 struct _job job_capture_batteryvolt;
 struct _job job_reset;
@@ -314,8 +315,11 @@ int main(void)
 					main_flag.changeWindow = 0;
 
 					LcdClear();
+					//
+					job_buzzer = job_reset;
 					PinTo0(PORTWxBUZZER, PINxBUZZER);
-
+					job_capture_resistance2 = job_reset;
+					//
 					if (sm0 == 0)
 					{
 						wVENTA1();//RESISTENCIA
@@ -364,19 +368,28 @@ int main(void)
 //					gotoXY (20,4);
 //					LcdString(str);
 
-					//if ( (resistance1 >= R2_RANGE_MIN) && (resistance1  <= R2_RANGE_MAX) )
-					if (resistance1 < R2_RANGE_MIN)
+					if (job_capture_resistance2.sm0 == 0)
 					{
-						//Buzzer ON
-						//PinTo1(PORTWxBUZZER, PINxBUZZER);
-						job_buzzer.f.job = 1;
-						PinTo1(PORTWxLED1, PINxLED1);
+						if ( (resistance1 >= R1_RANGE_MIN) && (resistance1  <= R1_RANGE_MAX) )
+						{
+							job_capture_resistance2.sm0++;
+						}
 					}
-					else
+					if (job_capture_resistance2.sm0 == 1)
 					{
-						job_buzzer = job_reset;
-						PinTo0(PORTWxBUZZER, PINxBUZZER);
-						PinTo0(PORTWxLED1, PINxLED1);
+						if (resistance1 < R2_RANGE_MIN)
+						{
+							//Buzzer ON
+							//PinTo1(PORTWxBUZZER, PINxBUZZER);
+							job_buzzer.f.job = 1;
+							PinTo1(PORTWxLED1, PINxLED1);
+						}
+						else
+						{
+							job_buzzer = job_reset;
+							PinTo0(PORTWxBUZZER, PINxBUZZER);
+							PinTo0(PORTWxLED1, PINxLED1);
+						}
 					}
 				}
 				else if (sm0 == 2)
@@ -506,8 +519,8 @@ void batteryvolt_capture(void)
 			{
 				job_capture_batteryvolt.counter1 = 0;
 
-
 				smoothVector[job_capture_batteryvolt.counter0] = ADC_read(ADC_CH_0);
+
 				if (++job_capture_batteryvolt.counter0 >= BATTERYVOLT_SMOOTHALG_MAXSIZE)
 				{
 					job_capture_batteryvolt.counter0 = 0x00;
