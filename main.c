@@ -48,7 +48,7 @@ int16_t ADRESHL_RESISTANCE2 = 0;
 #define R1_RANGE_MAX 10000.0f
 
 //R2: 0..100 OHMs
-#define R2_RANGE_MIN 50.0f
+#define R2_RANGE_MIN 3000.0f
 #define R2_RANGE_MAX 60.0f
 
 float temperature;
@@ -204,13 +204,14 @@ struct _job
 	}f;
 };
 struct _job job_capture_temp;
+struct _job job_capture_batteryvolt;
 struct _job job_reset;
 struct _job job_buzzer;
 #define BUZZER_KTIME_MS 300
 void buzzer_job(void);
 
 #define TEMPERATURE_DEVIATION -2.0f
-
+void batteryvolt_capture(void);
 struct _smoothAlg
 {
 	int8_t sm0;//x jobs
@@ -224,7 +225,7 @@ struct _smoothAlg
 #define TEMP_SMOOTHALG_MAXSIZE 5
 const struct _smoothAlg smoothAlg_reset;
 struct _smoothAlg smoothAlg_temp;
-struct _smoothAlg smoothAlg_mvx;
+struct _smoothAlg smoothAlg_batteryvolt;
 
 //int8_t
 void temp_capture(int16_t ADRESHL_NTC10K);
@@ -363,7 +364,8 @@ int main(void)
 //					gotoXY (20,4);
 //					LcdString(str);
 
-					if ( (resistance1 >= R2_RANGE_MIN) && (resistance1  <= R2_RANGE_MAX) )
+					//if ( (resistance1 >= R2_RANGE_MIN) && (resistance1  <= R2_RANGE_MAX) )
+					if (resistance1 < R2_RANGE_MIN)
 					{
 						//Buzzer ON
 						//PinTo1(PORTWxBUZZER, PINxBUZZER);
@@ -387,18 +389,18 @@ int main(void)
 				}
 				else if (sm0 == 3)
 				{
-					battery_porcent = ( BATTERYVOLT_EQ_PENDIENTE_M*VoltBatt_get() ) + BATTERYVOLT_EQ_B;
-					if (battery_porcent < 0)
-					{
-						battery_porcent = 0.0f;
-					}
-					else if (battery_porcent >100.0)
-					{
-						battery_porcent = 100.0f;
-					}
+//					battery_porcent = ( BATTERYVOLT_EQ_PENDIENTE_M*VoltBatt_get() ) + BATTERYVOLT_EQ_B;
+//					if (battery_porcent < 0)
+//					{
+//						battery_porcent = 0.0f;
+//					}
+//					else if (battery_porcent >100.0)
+//					{
+//						battery_porcent = 100.0f;
+//					}
 
 					dtostrf(battery_porcent, 0, 1, str);
-					gotoXY (15,3);
+					gotoXY (25,3);
 					LCD_writeString_megaFont(str);
 
 				}
@@ -408,6 +410,7 @@ int main(void)
 		}
 
 		buzzer_job();
+		batteryvolt_capture();
 
 		main_flag.f1ms = 0;
 	}//End while
@@ -486,6 +489,61 @@ void temp_capture(int16_t ADRESHL_NTC10K)
 	}
 	//return 0;
 }
+
+#define BATTERYVOLT_SMOOTHALG_MAXSIZE 20
+#define BATTERYVOLT_KTIME_CAPTURE_AVERAGE 50
+//int8_t ADS1115_capture_mvx(float *mvx)
+void batteryvolt_capture(void)
+{
+	float smoothAnswer;
+	static int16_t smoothVector[BATTERYVOLT_SMOOTHALG_MAXSIZE];
+
+	if (job_capture_batteryvolt.sm0 == 0)
+	{
+		if (main_flag.f1ms)
+		{
+			if (++job_capture_batteryvolt.counter1 >= BATTERYVOLT_KTIME_CAPTURE_AVERAGE)
+			{
+				job_capture_batteryvolt.counter1 = 0;
+
+
+				smoothVector[job_capture_batteryvolt.counter0] = ADC_read(ADC_CH_0);
+				if (++job_capture_batteryvolt.counter0 >= BATTERYVOLT_SMOOTHALG_MAXSIZE)
+				{
+					job_capture_batteryvolt.counter0 = 0x00;
+
+					job_capture_batteryvolt.sm0++;//calcular smooth
+				}
+				else
+				{
+					job_capture_batteryvolt.counter1 = 0;
+				}
+			}
+		}
+	}
+	else if (job_capture_batteryvolt.sm0 == 1)
+	{
+		if (smoothAlg_nonblock(&smoothAlg_batteryvolt, smoothVector, BATTERYVOLT_SMOOTHALG_MAXSIZE, &smoothAnswer))
+		{
+			battery_porcent = (smoothAnswer * ADC_AREF * (ADCH1_R1 + ADCH1_R2) )/ (ADC_TOP * ADCH1_R1);
+			if (battery_porcent < 0)
+			{
+				battery_porcent = 0.0f;
+			}
+			else if (battery_porcent >100.0)
+			{
+				battery_porcent = 100.0f;
+			}
+
+			job_capture_batteryvolt.sm0 = 0x0;
+			//return 1;
+		}
+
+	}
+	//
+	//return 0;
+}
+
 int8_t smoothAlg_nonblock(struct _smoothAlg *smooth, int16_t *buffer, int SMOOTHALG_MAXSIZE, float *Answer)
 {
 //	static float average=0;
