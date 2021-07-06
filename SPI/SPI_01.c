@@ -16,8 +16,8 @@
         //DDRB |= (1<<7) | (1<< 4) | (1<< 5);
         //DDRB = 0xFF;
 
-        SPCR = (1<<SPE) | (0<< DORD) | (1<<MSTR) | (0<<CPOL) | (0<<CPHA) | (SPR1SPR0_SCK_FOSC_64);//x ISIS PROTEUS
-        //SPCR = (1<<SPE) | (0<< DORD) | (1<<MSTR) | (0<<CPOL) | (0<<CPHA) | (SPR1SPR0_SCK_FOSC_4); //x HARDWARE REAL
+        //SPCR = (1<<SPE) | (0<< DORD) | (1<<MSTR) | (0<<CPOL) | (0<<CPHA) | (SPR1SPR0_SCK_FOSC_64);//x ISIS PROTEUS
+        SPCR = (1<<SPE) | (0<< DORD) | (1<<MSTR) | (0<<CPOL) | (0<<CPHA) | (SPR1SPR0_SCK_FOSC_4); //x HARDWARE REAL
 
         //SPCR = 0x58;
         //01011000

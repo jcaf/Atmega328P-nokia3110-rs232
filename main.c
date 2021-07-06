@@ -45,7 +45,7 @@ int16_t ADRESHL_RESISTANCE2 = 0;
 //Activacion del buzzer dentro del rango
 //R1: 0..200 OHMs
 #define R1_RANGE_MIN 90.0f
-#define R1_RANGE_MAX 110.0f
+#define R1_RANGE_MAX 10000.0f
 
 //R2: 0..100 OHMs
 #define R2_RANGE_MIN 50.0f
@@ -351,6 +351,8 @@ int main(void)
 					{
 						//PinTo0(PORTWxBUZZER, PINxBUZZER);
 						job_buzzer = job_reset;
+						PinTo0(PORTWxBUZZER, PINxBUZZER);
+
 						PinTo0(PORTWxLED1, PINxLED1);
 					}
 				}
@@ -370,8 +372,8 @@ int main(void)
 					}
 					else
 					{
-						//PinTo0(PORTWxBUZZER, PINxBUZZER);
 						job_buzzer = job_reset;
+						PinTo0(PORTWxBUZZER, PINxBUZZER);
 						PinTo0(PORTWxLED1, PINxLED1);
 					}
 				}
@@ -427,7 +429,8 @@ void buzzer_job(void)
 	{
 		if (job_buzzer.sm0 == 0)
 		{
-			PinTo1(PORTWxBUZZER, PINxBUZZER);
+			//PinTo1(PORTWxBUZZER, PINxBUZZER);
+			PinToggle(PORTWxBUZZER, PINxBUZZER);
 			job_buzzer.counter0 = 0;
 			job_buzzer.sm0++;
 		}
@@ -437,7 +440,8 @@ void buzzer_job(void)
 			{
 				if (++job_buzzer.counter0 >= BUZZER_KTIME_MS)
 				{
-					PinTo0(PORTWxBUZZER, PINxBUZZER);
+					//PinTo0(PORTWxBUZZER, PINxBUZZER);
+
 					job_buzzer.counter0 = 0;
 					job_buzzer.sm0 = 0x0;
 					//job_buzzer.f.job = 0;
