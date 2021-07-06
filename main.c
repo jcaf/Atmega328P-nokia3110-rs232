@@ -440,7 +440,7 @@ void buzzer_job(void)
 					PinTo0(PORTWxBUZZER, PINxBUZZER);
 					job_buzzer.counter0 = 0;
 					job_buzzer.sm0 = 0x0;
-					job_buzzer.f.job = 0;
+					//job_buzzer.f.job = 0;
 				}
 			}
 		}

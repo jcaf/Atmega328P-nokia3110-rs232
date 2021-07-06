@@ -542,7 +542,7 @@ void bigfont2after_blanks(void)
 
 		for(int j=0; j<16; j++)
 		{
-			LcdWrite(LCD_D, 0xff);
+			LcdWrite(LCD_D, 0x00);
 		}
 	}
 }
