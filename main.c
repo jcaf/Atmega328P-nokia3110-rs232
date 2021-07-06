@@ -209,7 +209,7 @@ struct _job job_buzzer;
 #define BUZZER_KTIME_MS 300
 void buzzer_job(void);
 
-#define TEMPERATURE_DEVIATION -2
+#define TEMPERATURE_DEVIATION -2.0f
 
 struct _smoothAlg
 {
@@ -381,7 +381,7 @@ int main(void)
 				{
 					//itoa(ADRESHL_NTC10K, str, 10);
 					dtostrf(temperature, 0, 2, str);
-					gotoXY (8,3);
+					gotoXY (22,3);
 					//LcdString(str);
 					LCD_writeString_megaFont(str);
 				}
