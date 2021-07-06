@@ -322,8 +322,10 @@ int main(void)
 					LcdClear();
 					//
 					job_buzzer = job_reset;
-					PinTo0(PORTWxBUZZER, PINxBUZZER);
 					job_capture_resistance2 = job_reset;
+					//
+					PinTo0(PORTWxBUZZER, PINxBUZZER);
+					PinTo0(PORTWxLED1, PINxLED1);
 					//
 					if (sm0 == 0)
 					{
