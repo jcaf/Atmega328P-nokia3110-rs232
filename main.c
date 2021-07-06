@@ -180,9 +180,14 @@ float calculate_resistance(int16_t ADC_HL, int16_t adcTop)
 #define ADC_AREF 5		//5V MEDIR
 #define ADC_TOP 1023	//KTE
 
-float VoltBatt_get(void)//Blocking
+//float VoltBatt_get(void)//Blocking
+//{
+//	return (ADC_read(ADC_CH_0) * ADC_AREF * (ADCH1_R1 + ADCH1_R2) )/ (ADC_TOP * ADCH1_R1);
+//}
+float VoltBatt_get(int16_t ADC_mesured)//Blocking
 {
-	return (ADC_read(ADC_CH_0) * ADC_AREF * (ADCH1_R1 + ADCH1_R2) )/ (ADC_TOP * ADCH1_R1);
+	//return (ADC_read(ADC_CH_0) * ADC_AREF * (ADCH1_R1 + ADCH1_R2) )/ (ADC_TOP * ADCH1_R1);
+	return (ADC_mesured * ADC_AREF * (ADCH1_R1 + ADCH1_R2) )/ (ADC_TOP * ADCH1_R1);
 }
 
 
@@ -538,7 +543,10 @@ void batteryvolt_capture(void)
 	{
 		if (smoothAlg_nonblock(&smoothAlg_batteryvolt, smoothVector, BATTERYVOLT_SMOOTHALG_MAXSIZE, &smoothAnswer))
 		{
-			battery_porcent = (smoothAnswer * ADC_AREF * (ADCH1_R1 + ADCH1_R2) )/ (ADC_TOP * ADCH1_R1);
+			//battery_porcent = (smoothAnswer * ADC_AREF * (ADCH1_R1 + ADCH1_R2) )/ (ADC_TOP * ADCH1_R1);
+
+			battery_porcent = ( BATTERYVOLT_EQ_PENDIENTE_M*VoltBatt_get(smoothAnswer) ) + BATTERYVOLT_EQ_B;
+
 			if (battery_porcent < 0)
 			{
 				battery_porcent = 0.0f;
