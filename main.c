@@ -48,8 +48,8 @@ int16_t ADRESHL_RESISTANCE2 = 0;
 #define R1_RANGE_MAX 10000.0f
 
 //R2: 0..100 OHMs
-#define R2_RANGE_MIN 3000.0f
-#define R2_RANGE_MAX 60.0f
+#define R2_RANGE_MIN 0.0f//3000.0f
+#define R2_RANGE_MAX 6.0f//f
 
 float temperature;
 float resistance1;
@@ -343,14 +343,17 @@ int main(void)
 					{
 						wVENTA4();//BATERIA
 					}
+					PinTo1(PORTWxBUZZER, PINxBUZZER);
+					__delay_ms(40);
+					PinTo0(PORTWxBUZZER, PINxBUZZER);
 				}
 				//---------------------------
 				if (sm0 == 0)
 				{
 					//itoa(ADRESHL_RESISTANCE1, str, 10);
 					dtostrf(resistance1, 0, 1, str);
-//					gotoXY (20,4);
-//					LcdString(str);//resistencia
+//gotoXY (20,4);
+//LcdString(str);//resistencia
 
 					if ( (resistance1 >= R1_RANGE_MIN) && (resistance1  <= R1_RANGE_MAX) )
 					{
@@ -372,8 +375,8 @@ int main(void)
 				{
 					//itoa(ADRESHL_RESISTANCE2, str, 10);
 					dtostrf(resistance1, 0, 1, str);
-//					gotoXY (20,4);
-//					LcdString(str);
+//gotoXY (20,4);
+//LcdString(str);
 
 					if (job_capture_resistance2.sm0 == 0)
 					{
@@ -384,7 +387,8 @@ int main(void)
 					}
 					if (job_capture_resistance2.sm0 == 1)
 					{
-						if (resistance1 < R2_RANGE_MIN)
+						//if (resistance1 < R2_RANGE_MIN)
+						if ( (resistance1 >= R2_RANGE_MIN) && (resistance1  <= R2_RANGE_MAX) )
 						{
 							//Buzzer ON
 							//PinTo1(PORTWxBUZZER, PINxBUZZER);
@@ -403,7 +407,7 @@ int main(void)
 				{
 					//itoa(ADRESHL_NTC10K, str, 10);
 					dtostrf(temperature, 0, 2, str);
-					gotoXY (22,3);
+					gotoXY (18,3);
 					//LcdString(str);
 					LCD_writeString_megaFont(str);
 				}
@@ -420,7 +424,7 @@ int main(void)
 //					}
 
 					dtostrf(battery_porcent, 0, 1, str);
-					gotoXY (25,3);
+					gotoXY (15,3);
 					LCD_writeString_megaFont(str);
 
 				}
