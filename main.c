@@ -354,9 +354,9 @@ int main(void)
 				if (sm0 == 0)
 				{
 					//itoa(ADRESHL_RESISTANCE1, str, 10);
-					dtostrf(resistance1, 0, 1, str);
-gotoXY (20,4);
-LcdString(str);//resistencia
+//dtostrf(resistance1, 0, 1, str);
+//gotoXY (20,4);
+//LcdString(str);//resistencia
 
 					if ( (resistance1 >= R1_RANGE_MIN) && (resistance1  <= R1_RANGE_MAX) )
 					{
@@ -377,9 +377,9 @@ LcdString(str);//resistencia
 				else if (sm0 == 1)
 				{
 					//itoa(ADRESHL_RESISTANCE2, str, 10);
-					dtostrf(resistance1, 0, 1, str);
-gotoXY (20,4);
-LcdString(str);
+//dtostrf(resistance1, 0, 1, str);
+//gotoXY (20,4);
+//LcdString(str);
 
 					if (job_capture_resistance2.sm0 == 0)
 					{
@@ -412,15 +412,14 @@ LcdString(str);
 					dtostrf(temperature, 0, 2, str);
 
 					gotoXY (18,3);
-					//LCD_writeString_megaFont(str);
+					LCD_writeString_megaFont(str);
 					//LcdString(str);
-					LcdString(temp_debug_nf);
 
-					gotoXY (18,4);
-					LcdString(temp_debug_f);
-
-					gotoXY (18,5);
-					LcdString(str);
+//LcdString(temp_debug_nf);
+//gotoXY (18,4);
+//LcdString(temp_debug_f);
+//gotoXY (18,5);
+//LcdString(str);
 
 
 				}
