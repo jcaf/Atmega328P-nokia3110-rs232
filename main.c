@@ -30,6 +30,9 @@
 #include "NTC10K/NTC10K.h"
 #include "adc/adc.h"
 
+char temp_debug_nf[20];
+char temp_debug_f[20];
+
 char bin_to_asciihex(char c)//nibbleBin_to_asciiHex
 {
     if (c < 10)
@@ -352,8 +355,8 @@ int main(void)
 				{
 					//itoa(ADRESHL_RESISTANCE1, str, 10);
 					dtostrf(resistance1, 0, 1, str);
-//gotoXY (20,4);
-//LcdString(str);//resistencia
+gotoXY (20,4);
+LcdString(str);//resistencia
 
 					if ( (resistance1 >= R1_RANGE_MIN) && (resistance1  <= R1_RANGE_MAX) )
 					{
@@ -375,8 +378,8 @@ int main(void)
 				{
 					//itoa(ADRESHL_RESISTANCE2, str, 10);
 					dtostrf(resistance1, 0, 1, str);
-//gotoXY (20,4);
-//LcdString(str);
+gotoXY (20,4);
+LcdString(str);
 
 					if (job_capture_resistance2.sm0 == 0)
 					{
@@ -407,9 +410,19 @@ int main(void)
 				{
 					//itoa(ADRESHL_NTC10K, str, 10);
 					dtostrf(temperature, 0, 2, str);
+
 					gotoXY (18,3);
+					//LCD_writeString_megaFont(str);
 					//LcdString(str);
-					LCD_writeString_megaFont(str);
+					LcdString(temp_debug_nf);
+
+					gotoXY (18,4);
+					LcdString(temp_debug_f);
+
+					gotoXY (18,5);
+					LcdString(str);
+
+
 				}
 				else if (sm0 == 3)
 				{
@@ -500,6 +513,8 @@ void temp_capture(int16_t ADRESHL_NTC10K)
 		{
 			if (smoothAnswer > 0)
 			{
+dtostrf(smoothAnswer, 0 ,1, temp_debug_f);
+
 				temperature = ntc10k_st(smoothAnswer, 1023) + TEMPERATURE_DEVIATION;
 			}
 			else
@@ -704,6 +719,9 @@ int8_t str_trimlr(char *str_in, char *str_out, char l, char r)
  * 	@N512F1023R256C21
 	@N512F1023R257C22
  */
+
+
+
 void rx_trama(void)
 {
 	//
@@ -798,6 +816,9 @@ void rx_trama(void)
 				//Convertir de ASCII a integer, separar la data
 				if (str_trimlr(rx.buffer, buff_temp, 'N', 'F' ))
 				{
+
+strcpy(temp_debug_nf, buff_temp);
+
 					ADRESHL_NTC10K = atoi(buff_temp);
 
 					temp_capture(ADRESHL_NTC10K);
