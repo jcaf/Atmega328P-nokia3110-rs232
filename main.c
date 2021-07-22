@@ -64,6 +64,7 @@ float resistance1;
 float resistance2;
 //float batteryvoltage;
 float battery_porcent;
+
 //6V -> 0%
 //9>= ->100%
 #define BATTERYVOLT_MIN 6//VDC
@@ -224,7 +225,9 @@ struct _job job_buzzer;
 #define BUZZER_KTIME_MS 300
 void buzzer_job(void);
 
-#define TEMPERATURE_DEVIATION -2.0f
+//#define TEMPERATURE_DEVIATION -2.0f
+#define TEMPERATURE_DEVIATION 0.5f
+
 void batteryvolt_capture(void);
 struct _smoothAlg
 {
@@ -417,14 +420,14 @@ int main(void)
 					dtostrf(temperature, 0, 2, str);
 
 					gotoXY (18,3);
-					//LCD_writeString_megaFont(str);
+					LCD_writeString_megaFont(str);
 					//LcdString(str);
 
-LcdString(temp_debug_nf);
-gotoXY (18,4);
-LcdString(temp_debug_f);
-gotoXY (18,5);
-LcdString(str);
+//LcdString(temp_debug_nf);
+//gotoXY (18,4);
+//LcdString(temp_debug_f);
+//gotoXY (18,5);
+//LcdString(str);
 
 
 				}
