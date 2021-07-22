@@ -15,6 +15,11 @@
  *
  *      http://carlosefr.github.io/pcd8544/
  *
+ * Comandos para sincronizar localmente desde el respositorio
+ * git pull origin master
+ * git stash (1 vez)
+ *
+ *
  * OK SABADO 26 JUNIO 2021
  * Pasando a Wilfredo
  */
@@ -412,14 +417,14 @@ int main(void)
 					dtostrf(temperature, 0, 2, str);
 
 					gotoXY (18,3);
-					LCD_writeString_megaFont(str);
+					//LCD_writeString_megaFont(str);
 					//LcdString(str);
 
-//LcdString(temp_debug_nf);
-//gotoXY (18,4);
-//LcdString(temp_debug_f);
-//gotoXY (18,5);
-//LcdString(str);
+LcdString(temp_debug_nf);
+gotoXY (18,4);
+LcdString(temp_debug_f);
+gotoXY (18,5);
+LcdString(str);
 
 
 				}
