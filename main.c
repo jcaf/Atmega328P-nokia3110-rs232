@@ -16,8 +16,8 @@
  *      http://carlosefr.github.io/pcd8544/
  *
  * Comandos para sincronizar localmente desde el respositorio
- * git pull origin master
  * git stash (1 vez)
+ * git pull origin master
  *
  *
  * OK SABADO 26 JUNIO 2021
@@ -72,7 +72,7 @@ float battery_porcent;
 #define BATTERYVOLT_EQ_PENDIENTE_M (100.0f/ (BATTERYVOLT_MAX-BATTERYVOLT_MIN))
 #define BATTERYVOLT_EQ_B -(BATTERYVOLT_EQ_PENDIENTE_M*BATTERYVOLT_MIN)
 
-char buff_out[SCIRBUF_BUFF_SIZE];
+
 
 void wINTRODUCCION(void)
 {
@@ -137,6 +137,7 @@ void wVENTA4(void)
 	//glc_write_WETRE_INDRERIGHT();
 	 gotoXY (15,1);
 	 LcdString("BATERIA");
+
 	 gotoXY(((84-5)/2)-5,2);
 	 LcdString("%");
 }
@@ -684,7 +685,9 @@ uint8_t checksum(char *str, uint8_t length)
 struct _rx
 {
 	int8_t sm0;
-	char buffer[RX_BUFFER_MAXSIZE];
+
+	//char buffer[RX_BUFFER_MAXSIZE];
+	char buffer[SCIRBUF_BUFF_SIZE+1];
 }rx;
 
 
@@ -704,8 +707,10 @@ int8_t str_trimlr(char *str_in, char *str_out, char l, char r)
 		if (str_in[counter] == l)
 		{
 			counter ++;//sale dejando apuntando al siguiente byte
+
 			//@N512F
 			//copy
+
 			for (;counter < length; counter++)
 			{
 
@@ -736,6 +741,7 @@ int8_t str_trimlr(char *str_in, char *str_out, char l, char r)
  */
 
 
+char buff_out[SCIRBUF_BUFF_SIZE+1];//necesita siempre ser +1 para el fin de C-string '\0'
 
 void rx_trama(void)
 {
@@ -743,13 +749,19 @@ void rx_trama(void)
 	uint8_t checks = 0;
 	char *pb = rx.buffer;
 	uint8_t counter = 0;
-	char str[4];
+	//char str[4];
 	char buff_temp[10];
 	int8_t idxtokens = 0;
 	int8_t idx_base = 0;
 	uint8_t bytes_available;
+	char c;
 
-	static char Cstr[64];//todos los bytes se inicializan a 0
+	#define TOKENS_NUMMAX 6
+	//const char tokens[TOKENS_NUMMAX] = {'@','N','F','R','C','\n'};
+	const char tokens[TOKENS_NUMMAX] = {'@','N','F','R','C',0x0D};//Enter x proteus
+
+
+	static char Cstr[SCIRBUF_BUFF_SIZE+1];//todos los bytes se inicializan a 0
 
 	if (rx.sm0 == 0)
 	{
@@ -766,15 +778,9 @@ void rx_trama(void)
 
 			//Ahora analizo por toda la trama completa
 			//@NxxxxFxxxxRxxxxCcc'\r\n'
-
 			idxtokens = 0;
-			#define TOKENS_NUMMAX 6
-			//const char tokens[TOKENS_NUMMAX] = {'@','N','F','R','C','\n'};
-			const char tokens[TOKENS_NUMMAX] = {'@','N','F','R','C',0x0D};//Enter x proteus
-
-
-			char c;
 			idx_base = 0;
+
 			for (int8_t i=0; i<strlen(Cstr); i++)
 			{
 				c = Cstr[i];
@@ -784,7 +790,9 @@ void rx_trama(void)
 				}
 				//
 				if (idxtokens > 0) //osea se encontró al menos el primer token '@'
-					{rx.buffer[idx_base++] = c;}
+				{
+					rx.buffer[idx_base++] = c;//empieza a guardar los datos
+				}
 
 				if (idxtokens >= TOKENS_NUMMAX)
 				{
@@ -793,7 +801,6 @@ void rx_trama(void)
 					strcpy(Cstr, "");//reset Cstr;
 					//
 					rx.sm0++;
-
 
 					break;
 				}
@@ -808,8 +815,9 @@ void rx_trama(void)
 		counter = 0x00;
 		pb = &rx.buffer[0];
 
-		while (*pb++ != 'C')//Si recorre todo array y no encuentra C, entonces resetear algoritmo de busqueda
+		while (*pb != 'C')//Si recorre todo array y no encuentra C, entonces resetear algoritmo de busqueda
 		{
+			pb++;
 			counter++;
 		}
 		checks = checksum(rx.buffer, counter);//checksum desde @....C, nada mas
