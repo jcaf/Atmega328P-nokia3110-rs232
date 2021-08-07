@@ -686,8 +686,8 @@ struct _rx
 {
 	int8_t sm0;
 
-	//char buffer[RX_BUFFER_MAXSIZE];
-	char buffer[SCIRBUF_BUFF_SIZE+1];
+	char buffer[RX_BUFFER_MAXSIZE];
+	//char buffer[SCIRBUF_BUFF_SIZE+1];
 }rx;
 
 
@@ -761,7 +761,8 @@ void rx_trama(void)
 	const char tokens[TOKENS_NUMMAX] = {'@','N','F','R','C',0x0D};//Enter x proteus
 
 
-	static char Cstr[SCIRBUF_BUFF_SIZE+1];//todos los bytes se inicializan a 0
+	//static char Cstr[SCIRBUF_BUFF_SIZE+1];//todos los bytes se inicializan a 0
+	static char Cstr[64];//todos los bytes se inicializan a 0
 
 	if (rx.sm0 == 0)
 	{
@@ -769,7 +770,7 @@ void rx_trama(void)
 		bytes_available = scirbuf_bytes_available();
 		if (bytes_available>0)
 		{
-			PinToggle(PORTWxLED1, PINxLED1);
+PinToggle(PORTWxLED1, PINxLED1);
 
 			scirbuf_read_nbytes((uint8_t*)buff_out, bytes_available); //hago la copia desde el buffer circular hacia el de salida temporal
 			//
