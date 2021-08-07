@@ -76,9 +76,10 @@ char buff_out[SCIRBUF_BUFF_SIZE];
 
 void wINTRODUCCION(void)
 {
-	 gotoXY (3,0);
-	 //LcdString("WETRE INDRE.");
-	 glc_write_WETRE_INDRERIGHT();
+	gotoXY(0,0);
+	LcdString("WETRE INDRE.");
+	//gotoXY(3,0);
+	//glc_write_WETRE_INDRERIGHT();
 	 gotoXY ((84-(7*7))/2,2);
 
 	 LcdString("SISTEMA");
@@ -86,36 +87,42 @@ void wINTRODUCCION(void)
 	 gotoXY ((84-(8*7))/2 , 3);
 	 LcdString("MEDICION");
 	 //gotoXY (15,4);
-	 gotoXY ((84-(5*7))/2,4);
-	 LcdString("T 300");
+	 gotoXY ((84-(8*7))/2,4);
+	 LcdString("PT 300PD");
 }
 
 void wVENTA1(void)
 {
-	gotoXY (3,0);
-	 //LcdString("WETRE INDRE.");
-	 glc_write_WETRE_INDRERIGHT();
+	gotoXY (0,0);
+	 LcdString("WETRE INDRE.");
+	//gotoXY (3,0);
+	//glc_write_WETRE_INDRERIGHT();
 
-	 gotoXY (20,2);
-	 LcdString("RESIST");//resistencia
+	 //gotoXY (26,2);
+	 gotoXY ((84-(5*7))/2,2);
+	 LcdString("RESIS");//resistencia
 	 gotoXY((84-33)/2, 3);
 	 glc_write_symbol_audio();
 }
 void wVENTA2(void)
 {
-	gotoXY (3,0);
-	 //LcdString("WETRE INDRE.");
-	 glc_write_WETRE_INDRERIGHT();
-	 gotoXY (7,2);
-	 LcdString("PRESION-OK");
+	gotoXY (0,0);
+	LcdString("WETRE INDRE.");
+	//gotoXY (3,0);
+	//glc_write_WETRE_INDRERIGHT();
+
+	//gotoXY (2,2);
+	gotoXY ((84-(11*7))/2,2);
+	 LcdString("PRESION-OK1");
 	 gotoXY((84-33)/2, 3);
 	 glc_write_symbol_audio();
 }
 void wVENTA3(void)
 {
-	gotoXY (3,0);
-	 //LcdString("WETRE INDRE.");
-	 glc_write_WETRE_INDRERIGHT();
+	gotoXY (0,0);
+	LcdString("WETRE INDRE.");
+	//gotoXY (3,0);
+	//glc_write_WETRE_INDRERIGHT();
 	 gotoXY (3,1);
 	 LcdString("TEMPERATURA");
 	 gotoXY ( ((84-10)/2) -5,2);
@@ -124,9 +131,10 @@ void wVENTA3(void)
 }
 void wVENTA4(void)
 {
-	gotoXY (3,0);
-	 //LcdString("WETRE INDRE.");
-	 glc_write_WETRE_INDRERIGHT();
+	gotoXY (0,0);
+	LcdString("WETRE INDRE.");
+	//gotoXY (3,0);
+	//glc_write_WETRE_INDRERIGHT();
 	 gotoXY (15,1);
 	 LcdString("BATERIA");
 	 gotoXY(((84-5)/2)-5,2);
@@ -226,7 +234,7 @@ struct _job job_buzzer;
 void buzzer_job(void);
 
 //#define TEMPERATURE_DEVIATION -2.0f
-#define TEMPERATURE_DEVIATION 0.5f
+#define TEMPERATURE_DEVIATION 3.0f
 
 void batteryvolt_capture(void);
 struct _smoothAlg
