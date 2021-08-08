@@ -770,7 +770,7 @@ void rx_trama(void)
 		bytes_available = scirbuf_bytes_available();
 		if (bytes_available>0)
 		{
-PinToggle(PORTWxLED1, PINxLED1);
+//PinToggle(PORTWxLED1, PINxLED1);
 
 			scirbuf_read_nbytes((uint8_t*)buff_out, bytes_available); //hago la copia desde el buffer circular hacia el de salida temporal
 			//
@@ -886,7 +886,7 @@ strcpy(temp_debug_nf, buff_temp);
 				}
 
 				rx.sm0 = 0x00;
-
+			PinToggle(PORTWxLED1, PINxLED1);
 			}
 		}
 	}
