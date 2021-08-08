@@ -675,22 +675,6 @@ uint8_t checksum(char *str, uint8_t length)
 
 
 
-/*
- * //Construir payload data + checksum
- @NxxxxFxxxxRxxxxCcc'\r\n'
- 1234546789........64
-
- */
-#define RX_BUFFER_MAXSIZE 32
-struct _rx
-{
-	int8_t sm0;
-
-	char buffer[RX_BUFFER_MAXSIZE];
-	//char buffer[SCIRBUF_BUFF_SIZE+1];
-}rx;
-
-
 /* recorre todo el array
  * 1: success
  * 0: fail
@@ -740,8 +724,21 @@ int8_t str_trimlr(char *str_in, char *str_out, char l, char r)
 	@N512F1023R257C22
  */
 
+/*
+ * //Construir payload data + checksum
+ @NxxxxFxxxxRxxxxCcc'\r\n'
+ 1234546789........64
 
-char buff_out[SCIRBUF_BUFF_SIZE+1];//necesita siempre ser +1 para el fin de C-string '\0'
+ */
+
+struct _rx
+{
+	int8_t sm0;
+	//#define RX_BUFFER_MAXSIZE 32
+	//char buffer[RX_BUFFER_MAXSIZE];
+	char buffer[SCIRBUF_BUFF_SIZE+1];//+1 solo si se convertira en C-str
+}rx;
+
 
 void rx_trama(void)
 {
@@ -749,40 +746,57 @@ void rx_trama(void)
 	uint8_t checks = 0;
 	char *pb = rx.buffer;
 	uint8_t counter = 0;
-	//char str[4];
 	char buff_temp[10];
 	int8_t idxtokens = 0;
 	int8_t idx_base = 0;
 	uint8_t bytes_available;
+	static int CstrIdx = 0;
 	char c;
 
 	#define TOKENS_NUMMAX 6
 	//const char tokens[TOKENS_NUMMAX] = {'@','N','F','R','C','\n'};
 	const char tokens[TOKENS_NUMMAX] = {'@','N','F','R','C',0x0D};//Enter x proteus
 
-
-	//static char Cstr[SCIRBUF_BUFF_SIZE+1];//todos los bytes se inicializan a 0
-	static char Cstr[64];//todos los bytes se inicializan a 0
+	char buff_out[SCIRBUF_BUFF_SIZE];
+	//
+	#define CSTR_SIZEMAX SCIRBUF_BUFF_SIZE
+	static char Cstr[CSTR_SIZEMAX];
+	static int CstrCurrentAvailableSpace = CSTR_SIZEMAX;
+	int nbytes2write=0;
 
 	if (rx.sm0 == 0)
 	{
-		//busqueda en buffer circular
 		bytes_available = scirbuf_bytes_available();
-		if (bytes_available>0)
+		if (bytes_available > 0)
 		{
-//PinToggle(PORTWxLED1, PINxLED1);
+			scirbuf_read_nbytes((uint8_t*)buff_out, bytes_available);
 
-			scirbuf_read_nbytes((uint8_t*)buff_out, bytes_available); //hago la copia desde el buffer circular hacia el de salida temporal
-			//
-			buff_out[bytes_available] = '\0';//convertir en c_str
-			strcat(Cstr,buff_out);
+			if (CstrCurrentAvailableSpace == CSTR_SIZEMAX)
+			{
+				CstrIdx = 0x00;
+			}
+			int temp = CstrCurrentAvailableSpace - bytes_available;
+			if (temp < 0)//NO HAY ESPACIO
+			{
+				nbytes2write = CstrCurrentAvailableSpace;
+				CstrCurrentAvailableSpace = CSTR_SIZEMAX;//RESET AL MAX para la sgte pasada
+			}
+			else
+			{
+				nbytes2write = bytes_available;
+				CstrCurrentAvailableSpace = temp;
+			}
+			for (int i=0; i<nbytes2write; i++)
+			{
+				Cstr[CstrIdx++] = buff_out[i];
+				//if (++CstrIdx > MAX)
+				//{CstrIdx	= 0;}
+			}
 
-			//Ahora analizo por toda la trama completa
-			//@NxxxxFxxxxRxxxxCcc'\r\n'
+			//Ahora analizo por toda la trama completa @NxxxxFxxxxRxxxxCcc'\r\n'
 			idxtokens = 0;
 			idx_base = 0;
-
-			for (int8_t i=0; i<strlen(Cstr); i++)
+			for (int i=0; i < CstrIdx; i++)
 			{
 				c = Cstr[i];
 				if (  c == tokens[idxtokens] )
@@ -799,7 +813,9 @@ void rx_trama(void)
 				{
 					//Todos los tokens fueron encontrados de principio a fin
 					rx.buffer[idx_base] = '\0';//fin, convierte a Cstring
-					strcpy(Cstr, "");//reset Cstr;
+
+					//reinicializar Cstr
+					CstrCurrentAvailableSpace = CSTR_SIZEMAX;//strcpy(Cstr, "");//reset Cstr;
 					//
 					rx.sm0++;
 
@@ -810,6 +826,9 @@ void rx_trama(void)
 	}
 	if (rx.sm0 == 1)
 	{
+
+		rx.sm0 = 0x00;//si falla cualquiera de las condiciones subsiguientes, regresa al estado anterior
+
 		//en este punto tengo la probabilidad de tener el buffer correctamente copiado desde el Buffer circular
 		//Necesito tener si o si toda la trama desde @ hasta \r\n.. OK
 		//@NxxxxFxxxxRxxxxCcc'\r\n'
@@ -820,6 +839,11 @@ void rx_trama(void)
 		{
 			pb++;
 			counter++;
+			//add
+			if (counter >= CstrIdx)
+			{
+				return;
+			}
 		}
 		checks = checksum(rx.buffer, counter);//checksum desde @....C, nada mas
 
